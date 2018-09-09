@@ -4,11 +4,16 @@
 #include <stdio.h>
 #include <math.h>
 
-
 #define GLOBAL static
 #define LOCAL static
 #define LOCAL_PERSIST static
 
+// TODO: Handle else case for asserts
+#if _DEBUG
+#define Assert(Expression) if (!(Expression)) { *(int *)0 = 0; } else { }
+#else
+#define Assert(Expression)
+#endif
 
 typedef uint8_t uint8;
 typedef uint32_t uint32;
@@ -25,7 +30,14 @@ typedef int32 bool32;
 typedef float real32;
 typedef double real64;
 
+#define Kilobytes(Value) (Value * 1024LL)
+#define Megabytes(Value) (Kilobytes(Value) * 1024LL)
+#define Gigabytes(Value) (Megabytes(Value) * 1024LL)
+#define Terabytes(Value) (Gigabytes(Value) * 1024LL)
+
 #define Pi32 3.14159265359f
+
+#define ArrayCount(Array) (sizeof(Array)/sizeof((Array)[0]))
 
 typedef struct game_bitmap_buffer 
 {
@@ -86,4 +98,23 @@ typedef struct game_input
 	game_controller_input Controllers[4];
 } game_input;
 
-LOCAL void GameUpdateAndRender(game_bitmap_buffer* Buffer, uint8 BlueOffset, uint8 GreenOffset, game_sound_output_buffer* SoundBuffer, int ToneHz);
+typedef struct game_memory
+{
+	bool32 IsInitialized;
+	uint64 PermanentStorageSize;
+	void* PermanentStorage;
+
+	uint64 TransientStorageSize;
+	void* TransientStorage;
+} game_memory;
+
+typedef struct game_state
+{
+	int BlueOffset;
+	int GreenOffset;
+	int ToneHz;
+
+} game_state;
+
+
+LOCAL void GameUpdateAndRender(game_memory* Memory, game_bitmap_buffer* Buffer, uint8 BlueOffset, uint8 GreenOffset, game_sound_output_buffer* SoundBuffer, int ToneHz);

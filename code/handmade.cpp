@@ -52,18 +52,33 @@ LOCAL void GameOutputSound(game_sound_output_buffer* SoundBuffer, int ToneHz)
 	}
 }
 
-LOCAL void GameUpdateAndRender(game_input *Input, game_bitmap_buffer* Buffer, game_sound_output_buffer* SoundBuffer)
+LOCAL void GameUpdateAndRender(game_memory* Memory, game_input *Input, game_bitmap_buffer* Buffer, game_sound_output_buffer* SoundBuffer)
 {
-	LOCAL_PERSIST int BlueOffset = 0;
-	LOCAL_PERSIST int GreenOffset = 0;
-	LOCAL_PERSIST int ToneHz = 256;
+	if (sizeof(game_state) <= Memory->PermanentStorageSize)
+	{
+		*(int *)0 = 0;
+	}
+	else
+	{
+		//TODO handle else case for asserts.
+	}
+
+	game_state *GameState = (game_state*)Memory->PermanentStorage;
+
+	if (!Memory->IsInitialized)
+	{
+		GameState->ToneHz = 256;
+
+		// TODO this maybe more appropriate for platform layer.
+		Memory->IsInitialized = true;
+	}
 
 	game_controller_input *Input0 = &Input->Controllers[0];
 
 	if (Input0->IsAnalog)
 	{
-		ToneHz = 256 + (int)(128.0f * Input0->EndX);
-		BlueOffset += (int)(4.0f * Input0->EndY);
+		GameState->BlueOffset += (int)(4.0f * Input0->EndX);
+		GameState->ToneHz = 256 + (int)(128.0f * Input0->EndY);
 	}
 	else
 	{
@@ -72,9 +87,9 @@ LOCAL void GameUpdateAndRender(game_input *Input, game_bitmap_buffer* Buffer, ga
 
 	if (Input0->Down.EndedDown)
 	{
-		GreenOffset += 1;
+		GameState->GreenOffset += 1;
 	}
 
-	GameOutputSound(SoundBuffer, ToneHz);
-	RenderWeirdGradient(Buffer, BlueOffset, GreenOffset);
+	GameOutputSound(SoundBuffer, GameState->ToneHz);
+	RenderWeirdGradient(Buffer, GameState->BlueOffset, GameState->GreenOffset);
 }
