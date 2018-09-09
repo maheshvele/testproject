@@ -54,19 +54,21 @@ LOCAL void GameOutputSound(game_sound_output_buffer* SoundBuffer, int ToneHz)
 
 LOCAL void GameUpdateAndRender(game_memory* Memory, game_input *Input, game_bitmap_buffer* Buffer, game_sound_output_buffer* SoundBuffer)
 {
-	if (sizeof(game_state) <= Memory->PermanentStorageSize)
-	{
-		*(int *)0 = 0;
-	}
-	else
-	{
-		//TODO handle else case for asserts.
-	}
+	Assert(sizeof(game_state) <= Memory->PermanentStorageSize);
 
 	game_state *GameState = (game_state*)Memory->PermanentStorage;
 
 	if (!Memory->IsInitialized)
 	{
+		char *FileName = __FILE__;
+		game_file_data FileData  = DEBUGPlatformReadEntireFileName(FileName);
+		
+		if (FileData.Contents)
+		{
+			DEBUGPlatformWriteEntireFileName("Test.out", FileData.ContentSize, FileData.Contents);
+			DEBUGPlatformFreeMemory(FileData.Contents);
+		}
+
 		GameState->ToneHz = 256;
 
 		// TODO this maybe more appropriate for platform layer.

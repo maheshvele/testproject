@@ -39,6 +39,13 @@ typedef double real64;
 
 #define ArrayCount(Array) (sizeof(Array)/sizeof((Array)[0]))
 
+inline uint32 SafeTruncateUint64(uint64 Value)
+{
+	Assert(Value <= 0xFFFFFFFF);
+	uint32 Result = (uint32)Value;
+	return Result;
+}
+
 typedef struct game_bitmap_buffer 
 {
 	void* Memory;
@@ -116,5 +123,17 @@ typedef struct game_state
 
 } game_state;
 
+#if _DEBUG
+
+typedef struct game_file_data
+{
+	uint32 ContentSize;
+	void *Contents;
+} game_file_data;
+
+LOCAL game_file_data DEBUGPlatformReadEntireFileName(char* FileName);
+LOCAL void DEBUGPlatformFreeMemory(void *Memory);
+LOCAL bool32 DEBUGPlatformWriteEntireFileName(char* FileName, uint32 MemorySize, void * Memory);
+#endif
 
 LOCAL void GameUpdateAndRender(game_memory* Memory, game_bitmap_buffer* Buffer, uint8 BlueOffset, uint8 GreenOffset, game_sound_output_buffer* SoundBuffer, int ToneHz);

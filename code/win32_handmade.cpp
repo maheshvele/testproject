@@ -41,12 +41,76 @@ typedef struct window_dimensions {
 
 GLOBAL win32_bitmap_buffer GlobalBuffer;
 
-
-void *PlatformLoadFile(char* FileName) 
+LOCAL game_file_data DEBUGPlatformReadEntireFileName(char* FileName)
 {
-	return 0;
+	game_file_data Result = {};
+	// OpenFile
+	HANDLE FileHandle = CreateFileA(FileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+	if (FileHandle != INVALID_HANDLE_VALUE)
+	{
+		LARGE_INTEGER FileSize ;
+		if (GetFileSizeEx(FileHandle, &FileSize))
+		{
+			//TODO: Define for MaxValues
+			Assert(FileSize.QuadPart <= 0xFFFFFFFF);
+			Result.Contents = VirtualAlloc(0, FileSize.QuadPart, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+			if (Result.Contents)
+			{
+				uint32 FileSize32 = SafeTruncateUint64(FileSize.QuadPart);
+				DWORD numberOfBytesRead;
+				if (ReadFile(FileHandle, Result.Contents, FileSize32, &numberOfBytesRead, 0) && 
+					FileSize32 == numberOfBytesRead)
+				{
+					Result.ContentSize = FileSize32;
+				}
+				else
+				{
+					DEBUGPlatformFreeMemory(Result.Contents);
+					Result.Contents = nullptr;
+				}
+			}
+		}
+
+		CloseHandle(FileHandle);
+	}
+
+	return Result;
 }
 
+LOCAL void DEBUGPlatformFreeMemory(void *Memory)
+{
+	if (Memory)
+	{
+		VirtualFree(Memory, NULL, MEM_RELEASE);
+	}
+}
+
+LOCAL bool32 DEBUGPlatformWriteEntireFileName(char* FileName, uint32 MemorySize, void * Memory)
+{
+	bool32 Result =  false;
+
+	HANDLE FileHandle = CreateFileA(FileName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+	if (FileHandle != INVALID_HANDLE_VALUE)
+	{
+		DWORD BytesWritten;
+		if (WriteFile(FileHandle, Memory, MemorySize, &BytesWritten, 0))
+		{
+			Result = (BytesWritten == MemorySize);
+		}
+		else
+		{
+
+		}
+
+		CloseHandle(FileHandle);
+	}
+	else
+	{
+		//TODO: Logging
+	}
+
+	return Result;
+}
 
 /*
 * This method gets called when the window size changes. 
